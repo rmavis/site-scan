@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'yaml'
 
 
 module PetFinder
@@ -98,20 +99,31 @@ module PetFinder
 end
 
 
-p = PetFinder::Scan.new('https://www.oregonhumane.org/adopt/?type=cats')
-# puts p.get_html_nodes(p.fetch, 'class="animal-results"')
+yaml_file = File.new('sources.yaml')
+yaml_body = yaml_file.read
+sources = YAML.load(yaml_body)
+sources.each do |source|
+  puts "Starting scan for #{source['title']}."
+  p = PetFinder::Scan.new(source['url'])
 
-f = File.new("ohs.html")
-doc = f.read
-result_sets = p.get_html_nodes(doc, 'class="animal-results"')
-puts "Got #{result_sets.length} result sets"
-result_sets.each { |set|
-  items = p.get_html_nodes(set, 'class="result-item"')
-  puts "Got #{items.length} items"
-  # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
-  puts "\nItem 1:\n#{items[0]}\n"
-  puts "\nItem 2:\n#{items[1]}\n"
-}
+  # For testing only.
+  f = File.new("ohs.html")
+  doc = f.read
+
+  # Is the result set even necessary?
+  result_sets = p.get_html_nodes(doc, source['match_result_set'])
+  puts "Got #{result_sets.length} result sets."
+
+  result_sets.each { |set|
+    items = p.get_html_nodes(set, source['match_result_item'])
+    puts "Got #{items.length} items."
+    # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
+    puts "\nItem 1:\n#{items[0]}\n"
+    puts "\nItem 2:\n#{items[1]}\n"
+  }
+
+end
+
 
 
 

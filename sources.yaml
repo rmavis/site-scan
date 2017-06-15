@@ -1,0 +1,11 @@
+---
+- title: "Oregon Humane Society"
+  url: "https://www.oregonhumane.org/adopt/?type=cats"
+  match_result_set: 'class="animal-results"'
+  match_result_item: 'class="result-item"'
+  match_item_name: '<span class="name">([^<]+)</span>'
+  match_item_breed: '<span class="breed">([^<]+)</span>'
+  match_item_sex: '<span class="sex">([^<]+)</span>'
+  match_item_color: '<span class="color">([^<]+)</span>'
+  match_item_age: '<span class="age">([^<]+)</span>'
+  match_item_link: '<a href="([^\"]+)">'
