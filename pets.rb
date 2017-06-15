@@ -4,24 +4,22 @@ require 'yaml'
 
 
 module PetFinder
-  class Scan
 
-    def initialize(url = '')
-      @url = url
-    end
+  class Scanner
 
-    attr_reader :url
-
-
-
-    def fetch(url = self.url)
+    def self.fetch_url(url)
       return Net::HTTP.get(URI(url))
     end
 
 
+    def self.fetch_file(path)
+      f = File.new(path)
+      return f.read
+    end
+
 
     # match_str can be like 'class="animal-results"'
-    def get_html_nodes(doc, match_str)
+    def self.get_html_nodes(doc, match_str)
       # This will contain the matching nodes.
       nodes = [ ]
       # This pattern will match the node's open tag.
@@ -95,6 +93,42 @@ module PetFinder
     #   exit
     # end
 
+
+    def self.get_value(doc, match_str)
+      re = Regexp.new(match_str, Regexp::IGNORECASE | Regexp::MULTILINE)
+      if (m = doc.match(re))
+        return m[1]
+      end
+      return nil
+    end
+
+  end
+
+
+
+
+
+  class Item
+
+    def initialize(node, attr_matches)
+      @attrs = scan_attrs(node, attr_matches)
+    end
+
+    attr_accessor :attrs
+
+
+    private
+
+    def scan_attrs(node, attr_matches)
+      attrs = { }
+      attr_matches.each do |attr|
+        attr.each_pair do |key,val|
+          attrs[key] = PetFinder::Scanner.get_value(node, val)
+        end
+      end
+      return attrs
+    end
+
   end
 
 end
@@ -104,24 +138,26 @@ yaml_file = File.new('sources.yaml')
 yaml_body = yaml_file.read
 sources = YAML.load(yaml_body)
 sources.each do |source|
-  puts source.to_s
+  # puts source.to_s
   puts "Starting scan for #{source['title']}."
-  p = PetFinder::Scan.new(source['url'])
 
   # For testing only.
-  f = File.new("ohs.html")
-  doc = f.read
-
-  # Is the result set even necessary?
-  result_sets = p.get_html_nodes(doc, source['match_set'])
+  # Also, is the result set even necessary?
+  result_sets = PetFinder::Scanner.get_html_nodes(
+    PetFinder::Scanner.fetch_file("ohs.html"),
+    source['match_set']
+  )
   puts "Got #{result_sets.length} result sets."
 
   result_sets.each { |set|
-    items = p.get_html_nodes(set, source['match_item'])
+    items = PetFinder::Scanner.get_html_nodes(set, source['match_item'])
     puts "Got #{items.length} items."
     # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
-    puts "\nItem 1:\n#{items[0]}\n"
-    puts "\nItem 2:\n#{items[1]}\n"
+    # puts "\nItem 1:\n#{items[0]}\n"
+    # puts "\nItem 2:\n#{items[1]}\n"
+    item = PetFinder::Item.new(items[0], source['item_attributes'])
+    puts "Sample item:"
+    puts item.attrs.to_s
   }
 
 end
