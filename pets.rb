@@ -96,6 +96,7 @@ module PetFinder
     # end
 
   end
+
 end
 
 
@@ -103,6 +104,7 @@ yaml_file = File.new('sources.yaml')
 yaml_body = yaml_file.read
 sources = YAML.load(yaml_body)
 sources.each do |source|
+  puts source.to_s
   puts "Starting scan for #{source['title']}."
   p = PetFinder::Scan.new(source['url'])
 
@@ -111,11 +113,11 @@ sources.each do |source|
   doc = f.read
 
   # Is the result set even necessary?
-  result_sets = p.get_html_nodes(doc, source['match_result_set'])
+  result_sets = p.get_html_nodes(doc, source['match_set'])
   puts "Got #{result_sets.length} result sets."
 
   result_sets.each { |set|
-    items = p.get_html_nodes(set, source['match_result_item'])
+    items = p.get_html_nodes(set, source['match_item'])
     puts "Got #{items.length} items."
     # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
     puts "\nItem 1:\n#{items[0]}\n"
