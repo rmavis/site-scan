@@ -1,9 +1,3 @@
-# Todo:
-# - [X] Include node tag in return from `get_html_nodes`
-# - [ ] Refactor `get_html_nodes` to use indices and slices
-#       rather than a collection array
-
-
 require 'net/http'
 require 'uri'
 
@@ -41,13 +35,11 @@ module PetFinder
       open_nodes = 0
       # This will become the index marking the start of the node.
       node_start = nil
-
-      collecting = false
-
       # The current index.
       o = 0
       # Set here because it's also used in the inner loop.
       doc_end = doc.length
+
       while (o < doc_end)
         char = doc[o]
         # puts "Checking char '#{char}'"
