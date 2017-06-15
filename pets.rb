@@ -1,3 +1,9 @@
+# Todo:
+# - [X] Include node tag in return from `get_html_nodes`
+# - [ ] Refactor `get_html_nodes` to use indices and slices
+#       rather than a collection array
+
+
 require 'net/http'
 require 'uri'
 
@@ -21,75 +27,65 @@ module PetFinder
 
     # match_str can be like 'class="animal-results"'
     def get_html_nodes(doc, match_str)
+      # This will contain the matching nodes.
       nodes = [ ]
-
       # This pattern will match the node's open tag.
       node_match = Regexp.new("([A-Za-z]+) [^>]*#{match_str}[^>]*", true)
       # This will become a regexp containing the matching open tag.
       open_match = false
       # This will become a regexp containing the matching close tag.
       close_match = false
-
+      # This will count the number of tags of the type that matches
+      # the `match_str`. It will increment with open tags, decrement
+      # with close tags, and the node will end when it reaches 0.
       open_nodes = 0
-      body_chars = [ ]
+      # This will become the index marking the start of the node.
+      node_start = nil
+
       collecting = false
 
+      # The current index.
       o = 0
+      # Set here because it's also used in the inner loop.
       doc_end = doc.length
-      while o < doc_end
+      while (o < doc_end)
         char = doc[o]
         # puts "Checking char '#{char}'"
 
         if (char == '<')
           # puts "Checking tag"
 
-          tag_chars = [char]
+          tag_body = ''
           i = o
-          while i < doc_end
-            i += 1
-            tag_chars.push(doc[i])
-            break if (doc[i] == '>')
+          while (o < doc_end)
+            o += 1
+            break if (doc[o] == '>')
           end
-          o = i
-          # puts "Tag body: #{tag_chars.join}"
+          tag_body = doc[i..o]
+          # puts "Tag body: #{tag_body}"
 
-          if collecting
-            if (m = tag_chars.join.match(open_match))
+          if (!node_start.nil?)
+            if (m = tag_body.match(open_match))
               # puts "Incrementing open nodes (#{open_nodes})"
               open_nodes += 1
-              body_chars += tag_chars
-            elsif (m = tag_chars.join.match(close_match))
+            elsif (m = tag_body.match(close_match))
               # puts "Decrementing open nodes (#{open_nodes})"
               open_nodes -= 1
-              # if (open_nodes < 0)
-              #   puts "HTML appears not to be well-formed (#{open_nodes} : #{tag_chars.join})"
-              #   puts body_chars.join
-              #   exit
-              # end
               if (open_nodes == 0)
                 # puts "Pushing node and clearing body"
-                nodes.push(body_chars.join)
-                collecting = false
-                body_chars.clear
-              else
-                body_chars += tag_chars
+                nodes.push(doc[node_start..o])
+                node_start = nil
               end
-            else
-              body_chars += tag_chars
             end
-          elsif (m = tag_chars.join.match(node_match))
+          elsif (m = tag_body.match(node_match))
             # puts "Found matching node"
             open_match = Regexp.new("^<#{m[1]}[^>]*", true)
             close_match = Regexp.new("^</#{m[1]}[^>]*", true)
-            collecting = true
+            node_start = i
             open_nodes += 1
           end
 
-          tag_chars = nil
-
-        elsif collecting
-          # puts "Collecting body character"
-          body_chars.push(char)
+          tag_body = nil
         end
         # puts "Next"
 
@@ -99,6 +95,13 @@ module PetFinder
       return nodes
     end
 
+    # But what if the HTML is not well-formed?
+    # if (open_nodes < 0)
+    #   puts "HTML appears not to be well-formed (#{open_nodes} : #{tag_chars.join})"
+    #   puts body_chars.join
+    #   exit
+    # end
+
   end
 end
 
@@ -106,7 +109,7 @@ end
 p = PetFinder::Scan.new('https://www.oregonhumane.org/adopt/?type=cats')
 # puts p.get_html_nodes(p.fetch, 'class="animal-results"')
 
-f = File.new("out")
+f = File.new("ohs.html")
 doc = f.read
 result_sets = p.get_html_nodes(doc, 'class="animal-results"')
 puts "Got #{result_sets.length} result sets"
