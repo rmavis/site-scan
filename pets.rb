@@ -167,6 +167,17 @@ module PetFinder
     end
 
 
+    def describe
+      parts = [ ]
+
+      self.attrs.each do |attr|
+        parts.push("#{attr[:title]}: #{attr[:value]}")
+      end
+
+      return parts.join("\n")
+    end
+
+
 
     private
 
@@ -226,7 +237,7 @@ sources.each do |source|
     items.each { |item|
       i = PetFinder::Item.new(item, source['item_attributes'])
       if (i.is_wanted?((source.has_key?('wants') && (source['wants'].downcase == 'all'))))
-        puts "Found match: #{i.attrs.to_s}"
+        puts "\nFound match:\n#{i.describe}"
       end
     }
   }
@@ -241,8 +252,8 @@ end
 #   Get a big string
 # X Find result set (specify rules in site-specific conf?)
 #   Find occurrence of results wrapper, start and end, get a chunk of the previous string
-# - Parse result items (also in rules)
+# X Parse result items (also in rules)
 #   Separate that result string into chunks, into an array of objects?
-# - Scan pertinent fields (maybe a schema specified per site?) for each result item
+# X Scan pertinent fields (maybe a schema specified per site?) for each result item
 # - If a match is found, collect relevant information and send an email
 #   Digest this per scan, one email per scan
