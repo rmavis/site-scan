@@ -1,4 +1,11 @@
 ---
+# If there is a single-key item that specifies an email address,
+# then that address will receive the alert. But an address can be
+# specified for each item separately. If an item contains its own
+# email, then that one will take priority. An `email` can specify
+# one or more addresses (comma-separated).
+- email: 'rmavis@gmail.com'
+
 - title: "Oregon Humane Society"
   url: "https://www.oregonhumane.org/adopt/?type=cats"
   match_set: 'class="animal-results"'

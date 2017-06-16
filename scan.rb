@@ -1,14 +1,20 @@
-require 'yaml'
+#!/usr/bin/env ruby
 
 
 module SiteScan
   class Scan
+
+    def self.default_source_file
+      "#{File.dirname(__FILE__)}/sources.yaml"
+    end
+
 
     def self.load_lib
       [
         'lib/alert.rb',
         'lib/html.rb',
         'lib/item.rb',
+        'lib/source.rb',
       ].each do |file|
         require_relative file
       end
@@ -16,33 +22,35 @@ module SiteScan
 
 
 
-    def initialize(sources)
+    def initialize(args)
       SiteScan::Scan.load_lib
 
-      sources.each do |source|
+      conf = (args.length > 0) ? SiteScan::Source.from_files(args) : SiteScan::Source.from_files([SiteScan::Scan.default_source_file])
+puts conf.to_s
+      conf[:sources].each do |source|
         # puts source.to_s
-        puts "Starting scan for #{source['title']}."
+        puts "Starting scan for #{source.title}."
 
         # For testing only.
         # Also, is the result set even necessary?
         result_sets = SiteScan::HTML.get_nodes(
           SiteScan::HTML.fetch_file("ohs.html"),
-          source['match_set']
+          source.match_set
         )
         puts "Got #{result_sets.length} result sets."
 
         result_sets.each { |set|
-          items = SiteScan::HTML.get_nodes(set, source['match_item'])
+          items = SiteScan::HTML.get_nodes(set, source.match_item)
           puts "Got #{items.length} items."
           # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
           # puts "\nItem 1:\n#{items[0]}\n"
           # puts "\nItem 2:\n#{items[1]}\n"
-          # item = SiteScan::Item.new(items[0], source['item_attributes'])
+          # item = SiteScan::Item.new(items[0], source.item_attributes)
           # puts "Sample item:"
           # puts item.attrs.to_s
           items.each { |item|
-            i = SiteScan::Item.new(item, source['item_attributes'])
-            if (i.is_wanted?((source.has_key?('wants') && (source['wants'].downcase == 'all'))))
+            i = SiteScan::Item.new(item, source.item_attributes)
+            if (i.is_wanted?((source.respond_to?(:wants) && (source.wants.downcase == 'all'))))
               puts "\nFound match:\n#{i.describe}"
             end
           }
@@ -54,10 +62,8 @@ module SiteScan
   end
 end
 
-
-yaml_file = File.new('sources.yaml')
-yaml_body = yaml_file.read
-SiteScan::Scan.new(YAML.load(yaml_body))
+# This runs it.
+SiteScan::Scan.new(ARGV)
 
 
 
