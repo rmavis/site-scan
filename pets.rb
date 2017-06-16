@@ -94,6 +94,10 @@ module PetFinder
     # end
 
 
+    # `get_value` receives a node string and a match string. That
+    # match string must be a regex pattern that contains one capture
+    # group. If the node contains the match, then the captured value
+    # will be returned, else nil.
     def self.get_value(doc, match_str)
       re = Regexp.new(match_str, Regexp::IGNORECASE | Regexp::MULTILINE)
       if (m = doc.match(re))
@@ -114,18 +118,79 @@ module PetFinder
       @attrs = scan_attrs(node, attr_matches)
     end
 
-    attr_accessor :attrs
+    attr_reader :attrs
+
+
+    def is_wanted?(match_all = false)
+      # puts "Checking if item is wanted."
+      wants_count = 0
+      match_count = 0
+
+      self.attrs.each do |attr|
+        if (!attr[:want].nil?)
+          # puts "Want value(s) specified on #{attr[:title]} (#{attr[:value]}): #{attr[:want]}"
+          wants_count += 1
+
+          attr[:want].each do |want_val|
+            # If the value is quoted, match it exactly.
+            if ((want_val[0] == '"') ||
+                (want_val[0] == "'"))
+              quote = want_val[0]
+              if (want_val[(want_val.length - 1)] == quote)
+                # puts "Value #{want_val} is quoted."
+                if (attr[:value].downcase == want_val[1..(want_val.length - 2)].downcase)
+                  # puts "Matches."
+                  match_count += 1
+                else
+                  # puts "Doesn't match."
+                end
+              elsif (attr[:value].downcase.include?(want_val.downcase))
+                # puts "Matches (loose / 1)."
+                match_count += 1
+              else
+                # puts "Doesn't match."
+              end
+            elsif (attr[:value].downcase.include?(want_val.downcase))
+              # puts "Matches (loose / 2)."
+              match_count += 1
+            end
+          end
+        end
+      end
+
+      # puts "Wanted? #{wants_count} & #{match_count}"
+      if match_all
+        return (wants_count == match_count)
+      else
+        return ((wants_count == 0) || (match_count > 0))
+      end
+    end
+
 
 
     private
 
     def scan_attrs(node, attr_matches)
-      attrs = { }
-      attr_matches.each do |attr|
-        attr.each_pair do |key,val|
-          attrs[key] = PetFinder::Scanner.get_value(node, val)
+      attrs = [ ]
+
+      attr_matches.each do |rule|
+        attr = {
+          :want => nil
+        }
+
+        rule.each_pair do |key,val|
+          # "want" is a reserved word used to specify desired values.
+          if (key.downcase == 'want')
+            attr[:want] = val
+          else
+            attr[:title] = key
+            attr[:value] = PetFinder::Scanner.get_value(node, val)
+          end
         end
+
+        attrs.push(attr)
       end
+
       return attrs
     end
 
@@ -155,9 +220,15 @@ sources.each do |source|
     # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
     # puts "\nItem 1:\n#{items[0]}\n"
     # puts "\nItem 2:\n#{items[1]}\n"
-    item = PetFinder::Item.new(items[0], source['item_attributes'])
-    puts "Sample item:"
-    puts item.attrs.to_s
+    # item = PetFinder::Item.new(items[0], source['item_attributes'])
+    # puts "Sample item:"
+    # puts item.attrs.to_s
+    items.each { |item|
+      i = PetFinder::Item.new(item, source['item_attributes'])
+      if (i.is_wanted?((source.has_key?('wants') && (source['wants'].downcase == 'all'))))
+        puts "Found match: #{i.attrs.to_s}"
+      end
+    }
   }
 
 end
