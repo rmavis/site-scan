@@ -70,18 +70,16 @@ module SiteScan
 
 
 
-    def initialize(src = { })
+    def initialize(src = { }, items = [ ])
       if (SiteScan::Source.is_ok?(src))
-        src.each do |key,val|
-          self.instance_variable_set("@#{key}", val)
-          self.class.send(:define_method, key, proc{self.instance_variable_get("@#{key}")})
-          self.class.send(:define_method, "#{key}=", proc{|val| self.instance_variable_set("@#{key}", val)})
-        end
-
+        @attrs = src
+        @items = items
       else
         raise ArgumentError.new("Ill-formed source (#{src.to_s})")
       end
     end
+
+    attr_accessor :attrs, :items
 
   end
 end

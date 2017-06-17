@@ -9,7 +9,7 @@ module SiteScan
     end
 
 
-    def self.load_lib
+    def self.load_lib!
       [
         'lib/alert.rb',
         'lib/html.rb',
@@ -23,39 +23,41 @@ module SiteScan
 
 
     def initialize(args)
-      SiteScan::Scan.load_lib
+      SiteScan::Scan.load_lib!
 
       conf = (args.length > 0) ? SiteScan::Source.from_files(args) : SiteScan::Source.from_files([SiteScan::Scan.default_source_file])
-puts conf.to_s
-      conf[:sources].each do |source|
-        # puts source.to_s
-        puts "Starting scan for #{source.title}."
+      self.gather!(conf[:sources])
+      SiteScan::Log.items(conf[:sources])
+    end
+
+
+
+    def gather!(sources)
+      sources.each do |source|
+        puts "Starting scan for #{source.attrs['title']}."
 
         # For testing only.
         # Also, is the result set even necessary?
         result_sets = SiteScan::HTML.get_nodes(
           SiteScan::HTML.fetch_file("ohs.html"),
-          source.match_set
+          source.attrs['match_set']
         )
         puts "Got #{result_sets.length} result sets."
 
-        result_sets.each { |set|
-          items = SiteScan::HTML.get_nodes(set, source.match_item)
-          puts "Got #{items.length} items."
-          # items.each { |item| puts "\n\n\nResult item:\n#{item}" }
-          # puts "\nItem 1:\n#{items[0]}\n"
-          # puts "\nItem 2:\n#{items[1]}\n"
-          # item = SiteScan::Item.new(items[0], source.item_attributes)
-          # puts "Sample item:"
-          # puts item.attrs.to_s
-          items.each { |item|
-            i = SiteScan::Item.new(item, source.item_attributes)
-            if (i.is_wanted?((source.respond_to?(:wants) && (source.wants.downcase == 'all'))))
-              puts "\nFound match:\n#{i.describe}"
-            end
-          }
-        }
+        want_all = (source.attrs.has_key?('wants') &&
+                    (source.attrs['wants'].downcase == 'all'))
 
+        result_sets.each do |set|
+          nodes = SiteScan::HTML.get_nodes(set, source.attrs['match_item'])
+          puts "Got #{nodes.length} nodes."
+          nodes.each do |node|
+            item = SiteScan::Item.new(node, source.attrs['item_attributes'])
+            if (item.is_wanted?(want_all))
+              source.items.push(item)
+            end
+          end
+          puts "Matched #{source.items.length} items."
+        end
       end
     end
 

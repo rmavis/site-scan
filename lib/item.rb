@@ -54,14 +54,14 @@ module SiteScan
     end
 
 
-    def describe
+    def describe(conj = "\n")
       parts = [ ]
 
       self.attrs.each do |attr|
         parts.push("#{attr[:title]}: #{attr[:value]}")
       end
 
-      return parts.join("\n")
+      return parts.join(conj)
     end
 
 
