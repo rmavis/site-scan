@@ -1,14 +1,17 @@
 require 'digest'
+require 'uri'
 
 
 module SiteScan
   class Item
 
-    def initialize(node, attr_matches)
+    def initialize(source, node, attr_matches)
       @attrs = scan_attrs(node, attr_matches)
+      @source = source
     end
 
-    attr_reader :attrs
+    attr_reader :attrs, :source
+
 
 
     def is_wanted?(match_all = false)
@@ -62,7 +65,16 @@ module SiteScan
       parts = [ ]
 
       self.attrs.each do |attr|
-        parts.push("#{attr[:title]}: #{attr[:value]}")
+        if (attr[:title].downcase == 'link')
+          if (attr[:value][0] == '/')
+            uri = URI.parse(self.source.attrs['url'])
+            parts.push("#{attr[:title]}: #{uri.scheme}://#{uri.host}#{attr[:value]}")
+          else
+            parts.push("#{attr[:title]}: #{attr[:value]}")
+          end
+        else
+          parts.push("#{attr[:title]}: #{attr[:value]}")
+        end
       end
 
       return parts.join(conj)

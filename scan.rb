@@ -43,8 +43,12 @@ module SiteScan
 
       conf = (args.length > 0) ? SiteScan::Source.from_files(args) : SiteScan::Source.from_files([SiteScan::Scan.default_source_file])
       self.get_items!(conf[:sources])
-      self.get_new_items!(conf[:sources])
-      self.log_new_items!(conf[:sources])
+      n = self.get_new_items!(conf[:sources])
+      if (n > 0)
+        # self.log_new_items!(conf[:sources])
+        msg_body = self.build_digest(conf[:sources])
+        # puts msg_body
+      end
     end
 
 
@@ -68,7 +72,7 @@ module SiteScan
           nodes = SiteScan::HTML.get_nodes(set, source.attrs['match_item'])
           puts "Got #{nodes.length} nodes."
           nodes.each do |node|
-            item = SiteScan::Item.new(node, source.attrs['item_attributes'])
+            item = SiteScan::Item.new(source, node, source.attrs['item_attributes'])
             if (item.is_wanted?(want_all))
               source.items.push(item)
             end
@@ -81,13 +85,18 @@ module SiteScan
 
 
     def get_new_items!(sources)
+      count = 0
+
       sources.each do |source|
         source.new_items = SiteScan::Vault.cull_new_items(
           "#{SiteScan::Scan.vault_dir}/#{source.log_name}",
           source.items
         )
+        count += source.new_items.length
         puts "Got #{source.new_items.length} new items for #{source.attrs['title']}."
       end
+
+      return count
     end
 
 
@@ -102,6 +111,13 @@ module SiteScan
           )
         end
       end
+    end
+
+
+
+    def build_digest(sources)
+      digests = sources.collect { |source| source.digest }
+      return digests.join("\n")
     end
 
   end

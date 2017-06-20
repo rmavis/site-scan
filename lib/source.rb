@@ -88,5 +88,23 @@ module SiteScan
       return self.attrs['title'].gsub(/[^-A-Z0-9a-z_]/, '')
     end
 
+
+
+    def digest
+      if (self.new_items.length == 0)
+        return "There are 0 new items for #{self.attrs['title']}."
+      end
+
+      parts = [
+        "There are #{self.new_items.length} new items for #{self.attrs['title']}:"
+      ]
+
+      self.new_items.each do |item|
+        parts.push("\n#{item.describe}")
+      end
+
+      return parts.join("\n")
+    end
+
   end
 end

@@ -22,6 +22,8 @@
       - Color: '<span class="color">([^<]+)</span>'
       - Age: '<span class="age">([^<]+)</span>'
       - Link: '<a href="([^\"]+)">'
+        # `Link` is another reserved word. Some modification may
+        # occur to this value between the reading and the digest.
   # If no wants are specified, every item will be assumed wanted.
   # If wants are specified, then the match mode can be loose (any
   # wanted value matches) or strict (every wanted value matches).
