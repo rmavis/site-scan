@@ -11,7 +11,7 @@ module SiteScan
 
 
     def self.fetch_file(path)
-      f = File.new(path)
+      f = File.new(path, 'r')
       return f.read
     end
 

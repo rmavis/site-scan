@@ -74,12 +74,19 @@ module SiteScan
       if (SiteScan::Source.is_ok?(src))
         @attrs = src
         @items = items
+        @new_items = [ ]
       else
         raise ArgumentError.new("Ill-formed source (#{src.to_s})")
       end
     end
 
-    attr_accessor :attrs, :items
+    attr_accessor :attrs, :items, :new_items
+
+
+
+    def log_name
+      return self.attrs['title'].gsub(/[^-A-Z0-9a-z_]/, '')
+    end
 
   end
 end

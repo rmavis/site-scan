@@ -9,12 +9,28 @@ module SiteScan
     end
 
 
+    def self.logs_dir
+      "#{File.dirname(__FILE__)}/logs"
+    end
+
+
+    def self.vault_dir
+      "#{self.logs_dir}/vault"
+    end
+
+
+    def self.dump_dir
+      "#{self.logs_dir}/dump"
+    end
+
+
     def self.load_lib!
       [
         'lib/alert.rb',
         'lib/html.rb',
         'lib/item.rb',
         'lib/source.rb',
+        'lib/vault.rb',
       ].each do |file|
         require_relative file
       end
@@ -26,13 +42,14 @@ module SiteScan
       SiteScan::Scan.load_lib!
 
       conf = (args.length > 0) ? SiteScan::Source.from_files(args) : SiteScan::Source.from_files([SiteScan::Scan.default_source_file])
-      self.gather!(conf[:sources])
-      SiteScan::Log.items(conf[:sources])
+      self.get_items!(conf[:sources])
+      self.get_new_items!(conf[:sources])
+      self.log_new_items!(conf[:sources])
     end
 
 
 
-    def gather!(sources)
+    def get_items!(sources)
       sources.each do |source|
         puts "Starting scan for #{source.attrs['title']}."
 
@@ -44,7 +61,7 @@ module SiteScan
         )
         puts "Got #{result_sets.length} result sets."
 
-        want_all = (source.attrs.has_key?('wants') &&
+        want_all = ((source.attrs.has_key?('wants')) &&
                     (source.attrs['wants'].downcase == 'all'))
 
         result_sets.each do |set|
@@ -57,6 +74,32 @@ module SiteScan
             end
           end
           puts "Matched #{source.items.length} items."
+        end
+      end
+    end
+
+
+
+    def get_new_items!(sources)
+      sources.each do |source|
+        source.new_items = SiteScan::Vault.cull_new_items(
+          "#{SiteScan::Scan.vault_dir}/#{source.log_name}",
+          source.items
+        )
+        puts "Got #{source.new_items.length} new items for #{source.attrs['title']}."
+      end
+    end
+
+
+
+    def log_new_items!(sources)
+      sources.each do |source|
+        if (source.new_items.length > 0)
+          puts "Logging #{source.new_items.length} new items for '#{source.attrs['title']}'."
+          SiteScan::Vault.add_item_keys(
+            "#{SiteScan::Scan.vault_dir}/#{source.log_name}",
+            source.new_items
+          )
         end
       end
     end

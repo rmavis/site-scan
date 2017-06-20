@@ -1,3 +1,6 @@
+require 'digest'
+
+
 module SiteScan
   class Item
 
@@ -54,6 +57,7 @@ module SiteScan
     end
 
 
+
     def describe(conj = "\n")
       parts = [ ]
 
@@ -62,6 +66,12 @@ module SiteScan
       end
 
       return parts.join(conj)
+    end
+
+
+
+    def hash
+      return Digest::MD5.hexdigest(self.describe(' '))
     end
 
 
