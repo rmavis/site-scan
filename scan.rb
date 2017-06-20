@@ -137,9 +137,11 @@ SiteScan::Scan.new(ARGV)
 # X Parse result items (also in rules)
 #   Separate that result string into chunks, into an array of objects?
 # X Scan pertinent fields (maybe a schema specified per site?) for each result item
-# - If a match is found, collect relevant information and send an email
+# X If a match is found, collect relevant information and send an email
 #   Digest this per scan, one email per scan
-# - Keep logs of unique matches
+# X Keep logs of unique matches
 #   Only email unique matches
-# - Other datasets
-# - Pagination?
+# - Email digest with new items
+# ? Per-scan log dumps
+# ? Other datasets
+# ? Pagination
