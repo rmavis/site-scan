@@ -1,35 +1,84 @@
 require 'net/smtp'
+require 'yaml'
 
 
 module SiteScan
   class Alert
 
-    def initialize
-      @items = [ ]
-      @going_to = nil
+    # This is the location of the YAML file that contains the SMTP
+    # server credentials.
+    def self.creds_file
+      "#{File.dirname(__FILE__)}/../smtp.yaml"
     end
 
-    attr_accessor :items, :going_to
+
+    # These keys must be present in the SMTP YAML file.
+    def self.required_creds
+      [
+        'from_address',
+        'from_domain',
+        'server',
+        'port',
+        'username',
+        'password',
+      ]
+    end
 
 
 
-    # def make_message(
+    def initialize(message, address)
+      creds = self.get_smtp_creds(Alert::creds_file)
+      if (!creds.nil?)
+        email = self.make_email(creds, message, address)
+        self.send(address, email, creds)
+      end
+    end
+
+
+    def get_smtp_creds(file)
+      creds = nil
+
+      yaml_file = File.new(file)
+      keys = Alert::required_creds
+      YAML.load(yaml_file.read).each do |item|
+        if (item.is_a?(Hash))
+          ok = true
+          keys.each do |key|
+            if (!item.has_key?(key))
+              ok = false
+            end
+          end
+          if (ok)
+            creds = item
+          end
+        end
+      end
+
+      return creds
+    end
 
 
 
-    # msgstr = <<END_OF_MESSAGE
-    # From: Your Name <your@mail.address>
-    # To: Destination Address <someone@example.com>
-    # Subject: test message
-    # Date: Sat, 23 Jun 2001 16:26:43 +0900
-    # Message-Id: <unique.message.id.string@example.com>
-    #
-    # This is a test message.
-    # END_OF_MESSAGE
+    def make_email(creds, body, address, subject = 'New finds from SiteScan')
+      email = <<EOM
+From: #{creds[:from_address]}
+To: #{address}
+Subject: #{subject}
+Date: #{Time.now.strftime('%a, %_m %b %Y %T %z')}
+    
+#{body}
+EOM
 
-    # Net::SMTP.start('your.smtp.server', 25) do |smtp|
-    #   smtp.send_message msgstr, 'from@address', 'to@address'
-    # end
+      return email
+    end
+
+
+    def send(address, email, creds, method = :login)
+      Net::SMTP.start(creds[:server], creds[:port], creds[:from_domain],
+                      creds[:username], creds[:password], method) do |smtp|
+        smtp.send_message email, creds[:from_address], address
+      end
+    end
 
   end
 end

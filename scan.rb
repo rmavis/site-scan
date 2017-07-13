@@ -52,9 +52,13 @@ module SiteScan
       self.get_items!(conf[:sources])
       n = self.get_new_items!(conf[:sources])
       if (n > 0)
+        # Uncomment this after testing.  @TODO
         # self.log_new_items!(conf[:sources])
-        msg_body = self.build_digest(conf[:sources])
-        # puts msg_body
+        digest = self.build_digest(conf[:sources])
+        # puts digest
+        if (!conf[:email].nil?)
+          SiteScan::Alert.new(digest, conf[:email])
+        end
       end
     end
 
@@ -66,7 +70,7 @@ module SiteScan
       sources.each do |source|
         puts "Starting scan for #{source.attrs['title']}."
 
-        # For testing only.
+        # For testing only.  @TODO
         # Also, is the result set even necessary?
         result_sets = SiteScan::HTML.get_nodes(
           SiteScan::HTML.fetch_file("ohs.html"),
@@ -161,6 +165,7 @@ SiteScan::Scan.new(ARGV)
 # X Keep logs of unique matches
 #   Only email unique matches
 # - Email digest with new items
+# - Fix items marked @TODO
 # ? Per-scan log dumps
 # ? Other datasets
 # ? Pagination
