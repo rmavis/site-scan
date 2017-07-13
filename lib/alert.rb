@@ -61,7 +61,7 @@ module SiteScan
 
     def make_email(creds, body, address, subject = 'New finds from SiteScan')
       email = <<EOM
-From: #{creds[:from_address]}
+From: #{creds['from_address']}
 To: #{address}
 Subject: #{subject}
 Date: #{Time.now.strftime('%a, %_m %b %Y %T %z')}
@@ -74,9 +74,9 @@ EOM
 
 
     def send(address, email, creds, method = :login)
-      Net::SMTP.start(creds[:server], creds[:port], creds[:from_domain],
-                      creds[:username], creds[:password], method) do |smtp|
-        smtp.send_message email, creds[:from_address], address
+      Net::SMTP.start(creds['server'], creds['port'], creds['from_domain'],
+                      creds['username'], creds['password'], method) do |smtp|
+        smtp.send_message email, creds['from_address'], address
       end
     end
 
