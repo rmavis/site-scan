@@ -2,21 +2,26 @@ require 'net/http'
 require 'uri'
 
 
+# The HTML class holds functionality for pulling and parsing HTML.
 module SiteScan
   class HTML
 
+    # fetch_url receives a URL and returns the retrieved HTML.
     def self.fetch_url(url)
       return Net::HTTP.get(URI(url))
     end
 
 
+    # fetch_file receives a file path and returns the contents.
     def self.fetch_file(path)
       f = File.new(path, 'r')
       return f.read
     end
 
 
-    # match_str can be like 'class="animal-results"'
+    # get_nodes receives an HTML string and a string to match in that
+    # HTML. The match_str will be used to match a node's open tag, so
+    # it should be something like `class="animal-results"`.
     def self.get_nodes(doc, match_str)
       # This will contain the matching nodes.
       nodes = [ ]
@@ -92,10 +97,10 @@ module SiteScan
     # end
 
 
-    # `get_value` receives a node string and a match string. That
-    # match string must be a regex pattern that contains one capture
-    # group. If the node contains the match, then the captured value
-    # will be returned, else nil.
+    # get_value receives two strings: a node string and a match.
+    # The match string must be a regex pattern that contains one
+    # capture group. If the node contains the match, then the
+    # captured value will be returned, else nil.
     def self.get_value(doc, match_str)
       re = Regexp.new(match_str, Regexp::IGNORECASE | Regexp::MULTILINE)
       if (m = doc.match(re))
