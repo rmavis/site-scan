@@ -1,5 +1,13 @@
 #!/usr/bin/env ruby
 
+=begin
+TODO
+- Fix items marked @TODO
+- Per-scan log dumps
+- Other datasets
+- Pagination
+=end
+
 
 # The Scan class runs the show. It receives the command line arguments
 # and orchestrates the work.
@@ -72,14 +80,14 @@ module SiteScan
 
         # For testing only.  @TODO
         # Also, is the result set even necessary?
-        result_sets = SiteScan::HTML.get_nodes(
-          SiteScan::HTML.fetch_file("ohs.html"),
-          source.attrs['match_set']
-        )
         # result_sets = SiteScan::HTML.get_nodes(
-        #   SiteScan::HTML.fetch_url(source.attrs['url']),
+        #   SiteScan::HTML.fetch_file("ohs.html"),
         #   source.attrs['match_set']
         # )
+        result_sets = SiteScan::HTML.get_nodes(
+          SiteScan::HTML.fetch_url(source.attrs['url']),
+          source.attrs['match_set']
+        )
         puts "Got #{result_sets.length} result sets."
 
         want_all = ((source.attrs.has_key?('wants')) &&
@@ -148,24 +156,3 @@ end
 
 # This runs it.
 SiteScan::Scan.new(ARGV)
-
-
-
-
-# Steps:
-# X Fetch (via curl?) page data
-#   Get a big string
-# X Find result set (specify rules in site-specific conf?)
-#   Find occurrence of results wrapper, start and end, get a chunk of the previous string
-# X Parse result items (also in rules)
-#   Separate that result string into chunks, into an array of objects?
-# X Scan pertinent fields (maybe a schema specified per site?) for each result item
-# X If a match is found, collect relevant information and send an email
-#   Digest this per scan, one email per scan
-# X Keep logs of unique matches
-#   Only email unique matches
-# - Email digest with new items
-# - Fix items marked @TODO
-# ? Per-scan log dumps
-# ? Other datasets
-# ? Pagination

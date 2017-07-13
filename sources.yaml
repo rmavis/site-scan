@@ -29,3 +29,6 @@
   # wanted value matches) or strict (every wanted value matches).
   # The default mode is loose. To make it strict, make this "all".
   wants: "all"
+
+# - title: "Willamette Humane Society"
+# curl 'https://whs4pets.org/wp-content/themes/whs/getcats.php' --data 'SEX=&BREED=&AGE=&LOCATION='

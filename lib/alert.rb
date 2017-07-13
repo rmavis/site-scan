@@ -73,7 +73,7 @@ EOM
     end
 
 
-    def send(address, email, creds, method = :login)
+    def send(address, email, creds, method = :plain)
       Net::SMTP.start(creds['server'], creds['port'], creds['from_domain'],
                       creds['username'], creds['password'], method) do |smtp|
         smtp.send_message email, creds['from_address'], address
